@@ -1,0 +1,22 @@
+const express = require('express');
+const app = express();
+
+app.use(express.json());
+
+// This is your chatbot logic. It receives a user's message and sends back a response.
+app.post('/', (req, res) => {
+  const userMessage = req.body.message;
+  let botResponse = '';
+
+  if (userMessage.toLowerCase().includes('hello')) {
+    botResponse = 'Hello there! How can I help you today?';
+  } else if (userMessage.toLowerCase().includes('name')) {
+    botResponse = 'My name is Artie, a friendly chatbot.';
+  } else {
+    botResponse = 'I\'m sorry, I don\'t understand that. Can you please rephrase?';
+  }
+
+  res.json({ response: botResponse });
+});
+
+module.exports = app;
