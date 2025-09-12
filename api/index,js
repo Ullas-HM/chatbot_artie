@@ -31,10 +31,16 @@ function findResponse(message) {
   return "I'm sorry, I don't have information on that. Can you please ask about our services, projects, or how to contact us?";
 }
 
-app.post('/api', (req, res) => {
+// Change this line:
+// app.post('/api', (req, res) => {
+
+// To this line:
+app.post('/', (req, res) => {
   const userMessage = req.body.message;
   console.log(`Received message: ${userMessage}`);
 
+  // ... rest of your code ...
+});
   const botReply = findResponse(userMessage);
 
   res.json({ message: botReply });
