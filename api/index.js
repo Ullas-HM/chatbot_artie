@@ -1,27 +1,26 @@
 // api/index.js
-import fetch from "node-fetch";
+const fetch = require("node-fetch");
 
 exports.handler = async function (event, context) {
   try {
-    const body = JSON.parse(event.body);
+    const body = JSON.parse(event.body || "{}");
     const userMessage = body.message || "";
 
     console.log(`Received message: ${userMessage}`);
 
-    // Call OpenAI Chat Completions API
+    // Call OpenAI API
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, // Netlify env var
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
         messages: [
           {
             role: "system",
-            content: `You are Artie, the AI assistant for Artificial Labs. 
-            Be witty, Gen Z–style, and answer questions about Artificial Labs' services, projects, and contact details.`,
+            content: `You are Artie, the AI assistant for Artificial Labs. Be witty, Gen Z–style, and answer questions about Artificial Labs' services, projects, and contact details.`,
           },
           { role: "user", content: userMessage },
         ],
