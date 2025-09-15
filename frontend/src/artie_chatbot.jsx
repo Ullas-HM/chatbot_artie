@@ -3,7 +3,6 @@ import React from 'react';
 // Main Chatbot Component
 export default function App() {
     // --- STATE MANAGEMENT ---
-    // Stores the conversation history
     const [messages, setMessages] = React.useState([
         {
             id: 1,
@@ -12,74 +11,45 @@ export default function App() {
             timestamp: new Date()
         }
     ]);
-    // Stores the current user input
     const [userInput, setUserInput] = React.useState('');
-    // Tracks if the bot is "thinking"
     const [isLoading, setIsLoading] = React.useState(false);
-    // Reference to the end of the chat for auto-scrolling
     const chatEndRef = React.useRef(null);
 
     // --- EFFECTS ---
-    // Automatically scroll to the latest message
     React.useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
     // --- CORE LOGIC ---
-    // Generates a response from the bot using the Gemini API
+    // Call our Netlify backend function (OpenAI key is stored in Netlify env vars)
     const getBotResponse = async (input) => {
-        const apiKey = ""; // Canvas will provide the key
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-        // This prompt guides the AI's personality
-        const systemPrompt = `You are Artie, the AI assistant for a company called Artificial Labs.
-        Your persona is "Gen Z humor": you're witty, use modern slang (like 'bet', 'vibe', 'no cap', 'slay'), and are super helpful but also a little informal and funny.
-        You have knowledge about Artificial Labs:
-        - Workflow: We give underwriters superpowers by automating repetitive tasks, making the process from submission to binding smooth. We help them focus on big decisions, not paperwork.
-        - Projects: We've partnered with major players like BMS Group and Apollo and were part of the Lloyd's Lab accelerator. We're building the future of insurance.
-        - About Us: We're a London-based company with a cloud-based platform for commercial and specialty insurers. Our tools help digitize processes and help clients write better risks, faster.
-        Keep your answers concise and engaging. If you're asked for a joke, tell a tech or AI-related one. If you don't know an answer, say something like "Oof, my circuits are buffering on that one. Try asking something else?".`;
-
-        const payload = {
-            systemInstruction: {
-                parts: [{ text: systemPrompt }]
-            },
-            contents: [{
-                parts: [{ text: input }]
-            }],
-        };
-
         try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+            const response = await fetch("/.netlify/functions/index", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: input }),
             });
 
             if (!response.ok) {
                 console.error("API Error Response:", await response.text());
-                return "Yikes, my brain just hit a 404 error. Could you try asking that again?";
+                return "Yikes, my brain just hit a 404 error. Could you try again?";
             }
 
             const result = await response.json();
-            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-
-            return text || "My circuits are a little tangled right now. What was that?";
+            return result.message || "My circuits are tangled rn, try again?";
         } catch (error) {
             console.error("Failed to fetch bot response:", error);
-            return "Oof, major lag. My connection to the digital universe just dropped. Please try again in a sec.";
+            return "Oof, major lag. My connection to the digital universe just dropped. Try again in a sec.";
         }
     };
 
-
     // --- EVENT HANDLERS ---
-    // Handles the form submission (when user sends a message)
     const handleSubmit = async (e, suggestedInput) => {
         e.preventDefault();
         const currentInput = suggestedInput || userInput;
         if (!currentInput.trim() || isLoading) return;
 
-        // Add user's message to the chat
+        // Add user message
         const userMessage = {
             id: Date.now(),
             author: 'user',
@@ -90,7 +60,7 @@ export default function App() {
         setUserInput('');
         setIsLoading(true);
 
-        // Get bot response and add it to the chat
+        // Fetch bot response
         const botResponseText = await getBotResponse(currentInput);
         const botMessage = {
             id: Date.now() + 1,
@@ -102,12 +72,9 @@ export default function App() {
         setIsLoading(false);
     };
 
-    // Handles clicking on a suggestion button
     const handleSuggestionClick = (suggestion) => {
-        // We pass the suggestion directly to handleSubmit
         handleSubmit({ preventDefault: () => {} }, suggestion);
     };
-
 
     // --- RENDER ---
     return (
@@ -134,10 +101,10 @@ export default function App() {
                                     <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-white text-sm shrink-0">A</div>
                                 )}
                                 <div className={`max-w-xs md:max-w-md p-4 rounded-2xl ${
-                                        message.author === 'bot'
+                                    message.author === 'bot'
                                         ? 'bg-gray-100 text-gray-800 rounded-bl-none'
                                         : 'bg-indigo-600 text-white rounded-br-none'
-                                    }`}>
+                                }`}>
                                     <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{message.text}</p>
                                     <p className={`text-xs mt-2 opacity-50 ${message.author === 'bot' ? 'text-right' : 'text-left'}`}>
                                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -162,15 +129,15 @@ export default function App() {
                 {/* Suggestion Chips */}
                 <div className="p-4 bg-white border-t border-gray-100">
                     <div className="flex flex-wrap gap-2">
-                         <button onClick={() => handleSuggestionClick("Tell me about your workflow")} className="px-3 py-1 text-sm bg-gray-100 text-indigo-700 rounded-full hover:bg-indigo-100 transition-colors">
+                        <button onClick={() => handleSuggestionClick("Tell me about your workflow")} className="px-3 py-1 text-sm bg-gray-100 text-indigo-700 rounded-full hover:bg-indigo-100 transition-colors">
                             Explain your workflow
-                         </button>
-                         <button onClick={() => handleSuggestionClick("Show me some projects")} className="px-3 py-1 text-sm bg-gray-100 text-indigo-700 rounded-full hover:bg-indigo-100 transition-colors">
+                        </button>
+                        <button onClick={() => handleSuggestionClick("Show me some projects")} className="px-3 py-1 text-sm bg-gray-100 text-indigo-700 rounded-full hover:bg-indigo-100 transition-colors">
                             Show me some projects
-                         </button>
-                         <button onClick={() => handleSuggestionClick("Tell me a joke")} className="px-3 py-1 text-sm bg-gray-100 text-indigo-700 rounded-full hover:bg-indigo-100 transition-colors">
+                        </button>
+                        <button onClick={() => handleSuggestionClick("Tell me a joke")} className="px-3 py-1 text-sm bg-gray-100 text-indigo-700 rounded-full hover:bg-indigo-100 transition-colors">
                             Tell me a joke
-                         </button>
+                        </button>
                     </div>
                 </div>
 
